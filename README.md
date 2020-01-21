@@ -1,1 +1,1 @@
-# Protein_structure_SPGm
+# Gradiente Projetado espectral para estruturas proteicas.
