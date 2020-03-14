@@ -19,14 +19,19 @@ local_dir = 'C:\\Users\\viniv\\Desktop\\Testes'
 raid_pdb = local_dir + '\\Teste {}\\{}.txt'.format(filename, filename)
 pdb = np.genfromtxt(raid_pdb, dtype='str')
 
+# num_atom_init :: número de átomos total presente na proteína escolhida;
+num_atom_init = int(len(pdb[:, 1]))
+
 print(":: Arquivo PDB lido com sucesso ! Iniciando gerador de distâncias;")
 
-gen_distance_file(pdb, filename, local_dir)
+# gera o arquivo de distâncias necessário, casa não exista, e retorna seu caminho
+raid_d = gen_distance_file(pdb, filename, local_dir)
 
 print(":: Processo finalizado com êxito, aguardando leitura dos dados...")
 
 # abertura do arquivo de distâncias gerado;
 distancias = np.genfromtxt(raid_d, dtype='str')
+print(":: Leitura de dist_{} concluida. ".format(filename))
 
 # variáveis de ajuste:
 # Noise :: Grau de perturbação da solução esperada;
@@ -331,7 +336,7 @@ for k in range(m):
 prop_dist = int(prop_dist)
 
 print("##########################  INFORMAÇÕES  ##########################")
-print("Proteína: {}, número de átomos iniciais: {}, após reordenação {}.".format(filename, Num_atom_ini, num_atom_ord))
+print("Proteína: {}, número de átomos iniciais: {}, após reordenação {}.".format(filename, num_atom_init, num_atom_ord))
 print('Distâncias avaliadas: {} e Distâncias Conhecidas: {}.'.format(m, prop_dist))
 if if_relax == 'Sim':
     print('Ponto inicial proveniente de relaxação convexa.')
