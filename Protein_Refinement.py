@@ -2,6 +2,8 @@ import numpy as np
 from scipy.linalg import svd
 import time
 from Methods.distance_file_gen import gen_distance_file
+from Methods.fun_aux import *
+from Methods.pdf_file_gen import write_pdb_file
 
 # recebe como input o nome da proteína a ser refinada
 
@@ -44,44 +46,6 @@ N = 2000
 M = 15
 
 # Informações sobre a proteína:
-
-" -- Funções auxiliares -- "
-
-
-def prod_interno(A1, B1, A2, B2):
-    n, p = A1.shape
-    m = len(A2)
-    Prod = 0.0
-    for j in range(p):
-        for i in range(n):
-            Prod += A1[i, j] * B1[i, j]
-    for i in range(m):
-        Prod += A2[i] * B2[i]
-
-    return Prod
-
-
-def distance(a, b, X):
-    dist = 0.0
-    p = len(X[0])
-    for i in range(p):
-        dist += (X[a, i] - X[b, i]) ** 2
-    return np.sqrt(dist)
-
-
-def centralizar(x):
-    x = np.array(x, dtype=float)
-    Mean = np.array(x[0, :])
-    (m, n) = x.shape
-
-    for i in range(1, m):
-        Mean += x[i, :]
-    Mean = Mean / m
-    for i in range(m):
-        x[i, :] += - Mean
-
-    return x
-
 
 " -- Função objetivo e gradiente -- "
 
@@ -286,47 +250,8 @@ for i in range(len(u)):
 
 lb, ub = np.array(distancias[:, 8], dtype='float'), np.array(distancias[:, 9], dtype='float')
 
-
-# Funções de suporte:
-
-def rmsd(A, B):
-    n = len(A)
-    A = centralizar(A)
-    B = centralizar(B)
-    SVD = svd(np.dot(B, A.T))
-    Q = np.dot(SVD[0], SVD[2].T)
-
-    correlation = np.linalg.norm(np.dot(Q, A) - B, ord='fro')
-
-    return np.sqrt(1 / n) * correlation
-
-
-def mde(ponto, vec_u, vec_v):
-    dim = len(vec_u)
-    S = 0
-    for s in range(dim):
-        dist_ponto = distance(vec_u[s], vec_v[s], ponto)
-        S += max((lb[s] - dist_ponto) / lb[s], 0) + max((dist_ponto - ub[s]) / ub[s], 0)
-
-    return S / m
-
-
 m = len(lb)
 w = np.ones(m)
-
-
-def dist_matrix_projection(dim, vec_u, vec_v, lower_bound, upper_bound, F):
-    y = np.zeros(dim)
-    for s in range(dim):
-        d = distance(vec_u[s], vec_v[s], F)
-        if lower_bound[s] <= d <= upper_bound[s]:
-            y[s] = d
-        elif d < lower_bound[s]:
-            y[s] = lower_bound[s]
-        elif d > upper_bound[s]:
-            y[s] = upper_bound[s]
-    return y
-
 
 yi = dist_matrix_projection(m, u, v, lb, ub, Xi)
 prop_dist = 0
@@ -360,7 +285,7 @@ except ValueError:
     print("ERRO !!!")
 
 print('RMSDi = {:<24} RMSDf = {}'.format(rmsd(Xi, Solve), rmsd(X, Solve)))
-print('MDEi = {:<25} MDEf = {}'.format(mde(Xi, u, v), mde(X, u, v)))
+print('MDEi = {:<25} MDEf = {}'.format(mde(Xi, u, v, lb, ub), mde(X, u, v, lb, ub)))
 print('BackTracking = {}.'.format(BackTracking))
 print("###################################################################")
 
@@ -375,56 +300,6 @@ with open(raid, 'a') as Ponto:
 # Arquivo de saída PDB:
 # ATOM i atom amino A res x1 x2 x3 0.00  0.00 atom[0]
 Nomes = np.array(Nomes)
-
-
-def write_pdb_file(dir, coord, atom, res, amino):
-    dir = str(dir)
-    with open(dir, 'w') as fid:
-        fid.write('HEADER    DE NOVO PROTEIN                         01-JAN-14   XXXX              \n')
-        fid.write('TITLE     SOLUTION OBTAINED BY iBP        \n')
-        fid.write('REMARK   1  Branch and Prune for the DMDGP        \n')
-        fid.write('REMARK   1  \n')
-        fid.write('MODEL        1   \n')
-        # n: número de átomos;
-        n = len(atom)
-        # naa: n-ésimo resíduo na sequência de aminoácidos;
-        naa = int(res[n - 1])
-
-        if naa > 0:
-            if int(res[n - 2]) > naa:
-                naa = int(res[n - 2])
-
-            nn = 0
-
-            fid.write('SEQRES   1 A {:.4f}  '.format(naa))
-            j = 0
-            k = 1
-
-            for i in range(n):
-                if int(res[i]) <= nn:
-                    continue
-                nn = int(res[i])
-                j = j + 1
-                if j > 13:
-                    j = 1
-                    fid.write(' \n')
-                    k = k + 1
-                    fid.write('SEQRES %3d A %4d  ' % (k, naa))
-
-                fid.write('%s' % amino[i])
-            fid.write('\n')
-
-        for i in range(n):
-            satom = atom[i]
-            dres = res[i]
-            samino = amino[i]
-            fid.write('ATOM  %5d %4s %3s A%4d    %8.3f%8.3f%8.3f  0.00  0.00          %1s \n' % (
-                i + 1, satom, samino, int(dres), coord[i, 0], coord[i, 1], coord[i, 2], satom[0]))
-
-        fid.write('TER     %d      %s A  %d \n' % (n, amino[n - 1], int(res[n - 1])))
-        fid.write('ENDMDL  \n')
-        fid.write('END \n')
-
 
 raid = 'C:\\Users\\viniv\\Desktop\\Testes\\Teste {}\\Sol_{}.pdb'.format(filename, filename)
 write_pdb_file(raid, X_spg, Nomes[:, 1], Nomes[:, 3], Nomes[:, 2])
