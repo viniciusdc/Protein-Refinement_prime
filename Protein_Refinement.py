@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.linalg import svd
 import time
+from Methods.distance_file_gen import gen_distance_file
 
 # recebe como input o nome da proteína a ser refinada
 
@@ -10,102 +11,17 @@ filename = str(input())
 # Arquivos guia:
 
 ' -- Gerador do arquivo de distâncias -- '
+# raid :: root archive index directory
+local_dir = 'C:\\Users\\viniv\\Desktop\\Testes'
 
-# raid :: root archive index directory, diretório do arquivo PDB principal.
 # - Arquivo PDB:
-raid = 'C:\\Users\\viniv\\Desktop\\Testes\\Teste {}\\{}.txt'.format(filename, filename)
-pdb = np.genfromtxt(raid, dtype='str')
+# raid_pdb :: diretório do arquivo PDB principal.
+raid_pdb = local_dir + '\\Teste {}\\{}.txt'.format(filename, filename)
+pdb = np.genfromtxt(raid_pdb, dtype='str')
 
 print(":: Arquivo PDB lido com sucesso ! Iniciando gerador de distâncias;")
-distance_control = 5.0  # distância intermolecular limite (Ang) aceita;
-print(":: Grau de aceitação da Distância intermolecular: {} Ang.".format(distance_control))
 
-# Inicio do código -----------------------------------------------------------------------
-Num_atom_ini = int(len(pdb[:, 1]))
-
-Cadeia = []
-Cadeia_principal = ['C', 'CA', 'N']
-atom_aceitos = ['H', 'C', 'CA', 'N', 'HA', 'CB', 'O', 'H1']
-delta = np.random.rand(1) / 100
-
-for atom1 in pdb[1:]:
-    for atom2 in pdb:
-        # Prossiga caso os átomos sejam diferentes:
-        # para evitar de adicionar repetidamente a mesma distância, faremos pares de menor para maior:
-        if atom1[1] != atom2[1] and int(atom2[1]) < int(atom1[1]):
-            # Cálculo da distância entre os dois átomos:
-            dist = 0.0
-            X1 = np.array(atom1[6:9], dtype=float)
-            X2 = np.array(atom2[6:9], dtype=float)
-            p = len(X1)
-            for j in range(p):
-                dist = dist + (X1[j] - X2[j]) ** 2
-            dist = np.sqrt(dist)
-
-            # Verificaremos se são átomos aceitáveis.
-            if atom1[2] in atom_aceitos and atom2[2] in atom_aceitos:
-                # Verificaremos se são átomos da cadeia principal.
-                if atom1[2] in Cadeia_principal and atom2[2] in Cadeia_principal:
-                    if atom1[5] == atom2[5]:  # Se estiverem na mesma cadeia:
-                        dist_l = dist - delta[0]
-                        dist_u = dist + delta[0]
-                        dist = str(dist)
-                        Cadeia.append(
-                            [atom2[1], atom1[1], atom2[2], atom2[3], atom2[5], atom1[2], atom1[3], atom1[5], dist_l,
-                             dist_u, '1'])
-                        # Caso contrário, adicionaremos se a distância (relativa) for menor que 5 Ang (1e-10 m):
-                    elif dist <= distance_control:
-                        # para evitar de adicionar repetidamente a mesma distância, faremos pares de menor para maior:
-                        # Adicionando 'ruído' as limitações inferiores e superiores:
-                        lb = dist - 1 / 3
-                        ub = dist + 1 / 3
-                        Cadeia.append(
-                            [atom2[1], atom1[1], atom2[2], atom2[3], atom2[5], atom1[2], atom1[3], atom1[5], str(lb),
-                             str(ub), '0'])
-
-                # Caso contrário, adicionaremos se a distância (relativa) for menor que 5 Ang (1e-10 m):
-                elif dist <= distance_control:
-                    # para evitar de adicionar repetidamente a mesma distância, faremos pares de menor para maior:
-                    # Adicionando 'ruído' as limitações inferiores e superiores:
-                    lb = dist - 1 / 3
-                    ub = dist + 1 / 3
-                    Cadeia.append(
-                        [atom2[1], atom1[1], atom2[2], atom2[3], atom2[5], atom1[2], atom1[3], atom1[5], str(lb),
-                         str(ub), '0'])
-
-print(">> Reorganizando numeração dos átomos escolhidos;")
-
-ref = np.array(Cadeia)
-ref = list(set(list(np.array(ref[:, 0], dtype='int')) + list(np.array(ref[:, 1], dtype='int'))))
-ref.sort()
-m = len(ref)
-for k in range(m):
-    num = str(ref[k])
-    for item in Cadeia:
-        if item[0] == num:
-            item[0] = str(k + 1)
-        if item[1] == num:
-            item[1] = str(k + 1)
-print(">> Preparação para escrita em arquivo;")
-
-Data = []
-for item in Cadeia:
-    Linha = '  '
-    for i in range(len(item)):
-        if i in [8, 9]:
-            Linha += format(item[i]).ljust(23, ' ')
-        else:
-            Linha += format(item[i]).ljust(5, ' ')
-    Data.append(Linha)
-
-# Escrita em arquivo:
-# raid_d :: diretório de saída do arquivo de distâncias gerado
-raid_d = 'C:\\Users\\viniv\\Desktop\\Testes\\Teste {}\\dist_{}.txt'.format(filename, filename)
-with open(raid_d, 'w') as distancias:
-    for item in Data:
-        distancias.write("%s\n" % item)
-
-# Fim do processo -------------------------------------------------------------------------
+gen_distance_file(pdb, filename, local_dir)
 
 print(":: Processo finalizado com êxito, aguardando leitura dos dados...")
 
