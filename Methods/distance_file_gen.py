@@ -16,9 +16,8 @@ def gen_distance_file(pdb, protein_id, raid):
 
     try:
         with open(raid_d) as f:
-            print(f.readlines())
             # Se o arquivo de distâncias já existe não há necessidade em criar um novo;
-            return
+            return raid_d
     # caso o arquivo não seja encontrado e/ou não exista no diretório especificado, prosseguimos criando um novo;
     except FileNotFoundError:
         print("Arquivo não encontrado. Gerando novo arquivo !")
@@ -31,9 +30,6 @@ def gen_distance_file(pdb, protein_id, raid):
     print(":: Grau de aceitação da Distância intermolecular: {} Ang.".format(distance_accept_control))
 
     # Inicio do código -------------------------------------------
-
-    # num_atom_init :: número de átomos total presente na proteína escolhida;
-    num_atom_init = int(len(pdb[:, 1]))
 
     # atomos_aceitos :: lista de átomos aceitos para comparação;
     # cadeia_principal :: definindo o que são os átomos da cadeia principal (Backbone);
@@ -122,4 +118,4 @@ def gen_distance_file(pdb, protein_id, raid):
             distancias.write("%s\n" % item)
 
     # Fim do processo -------------------------------------------------------------------------
-    return
+    return raid_d
