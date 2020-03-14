@@ -11,7 +11,7 @@ filename = str(input())
 
 ' -- Gerador do arquivo de distâncias -- '
 
-# raid :: diretório onde o arquivo PDB da proteína se encontra;
+# raid :: root archive index directory, diretório do arquivo PDB principal.
 # - Arquivo PDB:
 raid = 'C:\\Users\\viniv\\Desktop\\Testes\\Teste {}\\{}.txt'.format(filename, filename)
 pdb = np.genfromtxt(raid, dtype='str')
