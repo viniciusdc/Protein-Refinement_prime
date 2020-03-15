@@ -203,16 +203,16 @@ for k in range(1, L + 1):
         if k == int(item[0]):
             Nomes.append(item)
             break
-Xo = []
+Xo_v1 = []
 
 for item in Nomes:
     for atomo in pdb:
         atomo_name = [atomo[2], atomo[3], atomo[5]]
         if all(item[k + 1] == atomo_name[k] for k in range(3)):
-            Xo.append(np.array(atomo[6:9], dtype='float'))
+            Xo_v1.append(np.array(atomo[6:9], dtype='float'))
 
 # parâmetros referentes ao ponto inicial Xo;
-Solution = np.array(Xo)
+Solution = np.array(Xo_v1)
 # Solve :: Solução esperada/correta;
 Solve = centralizar(Solution)
 
@@ -232,7 +232,7 @@ if if_relax == "Sim":
         raid2 = "C:\\Users\\viniv\\Desktop\\Testes\\relax\\Teste {}\\gram_{}.txt".format(filename, filename)
         gram = np.genfromtxt(raid2)
         print(":: Leitura de gram_{} concluida. ".format(filename))
-    except:
+    except FileNotFoundError:
         print(":: Arquivo relax_{} ou gram_{} não encontrado...\n"
               ":: Gerando ponto inicial através de perturbação da solução esperada.".format(filename, filename))
 else:
@@ -276,6 +276,10 @@ try:
     t = time.time() - to  # duração total to processo.
     X = X_spg
     print("Solução encontrada !")
+
+    if check_solution_dimension(X, Solve):
+        print('Solução encontrada e solução esperada possuem número de átomos diferentes !')
+
     print('Iterações: {:<21} valor obj: {}\n'
           'GtD   = {:<24} tempo(s) = {}'.format(iter, fun_o / 2, GtD, t))
 except ValueError:
