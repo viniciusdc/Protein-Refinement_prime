@@ -59,7 +59,12 @@ def centralizar(x):
 # rmsd :: calcula a raiz quadrada da média dos desvios entre duas estruturas A e B (centralizadas);
 def rmsd(matrix_a, matrix_b):
     # n :: número de pontos;
-    n = len(matrix_a)
+    n, k = matrix_a.shape
+    if matrix_a.shape != matrix_b.shape:
+        print('Dimensões incompativeis entre as matrizes')
+        print('Dimensões da matriz A : {}'.format(matrix_a.shape))
+        print('Dimensões da matriz B : {}'.format(matrix_b.shape))
+        return 'NaN'
 
     matrix_a = centralizar(matrix_a)
     matrix_b = centralizar(matrix_b)
@@ -86,6 +91,14 @@ def mde(ponto, vec_u, vec_v, lb, ub):
         soma += max((lb[s] - dist_ponto) / lb[s], 0) + max((dist_ponto - ub[s]) / ub[s], 0)
 
     return soma / m
+
+
+# apenas uma checagem para verificar se o problema de dimensionamento foi resolvido.
+def check_solution_dimension(matrix_a, matrix_b):
+    if matrix_a.shape[0] != matrix_b.shape[0]:
+        return True
+    else:
+        return False
 
 
 # dado um conjunto de pontos, projeta-se suas distâncias sobre os limitantes lb e ub;
