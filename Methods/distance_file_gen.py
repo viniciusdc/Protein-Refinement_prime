@@ -8,7 +8,7 @@ import numpy as np
 # protein_id :: nome da proteina;
 # raid :: diretório local onde o arquivo de saída será hospedado (str).
 # exemplo :: 'C:\\Users\\**\\Desktop\\Testes'
-def gen_distance_file(pdb, protein_id, raid):
+def gen_distance_file(pdb, protein_id, raid, overwrite=0):
     # Informações de controle iniciais ---------------------------
 
     # raid_d :: diretório de saída do arquivo de distâncias gerado
@@ -17,7 +17,11 @@ def gen_distance_file(pdb, protein_id, raid):
     try:
         with open(raid_d) as f:
             # Se o arquivo de distâncias já existe não há necessidade em criar um novo;
-            return raid_d
+            if overwrite == 0:
+                return str(raid_d)
+            elif overwrite == 1:
+                # Usuario requisitou a geração de um novo arquivo de distâncias;
+                pass
     # caso o arquivo não seja encontrado e/ou não exista no diretório especificado, prosseguimos criando um novo;
     except FileNotFoundError:
         print("Arquivo não encontrado. Gerando novo arquivo !")
@@ -118,4 +122,8 @@ def gen_distance_file(pdb, protein_id, raid):
             distancias.write("%s\n" % item)
 
     # Fim do processo -------------------------------------------------------------------------
-    return raid_d
+    # uma vantagem de criar/ recriar o arquivo de distâncias é o dicionario com o mapa da nova ordenação;
+    if overwrite == 1:
+        return str(raid_d), dict_index_order
+    else:
+        return str(raid_d)
