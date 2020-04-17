@@ -28,7 +28,7 @@ def gen_distance_file(pdb, protein_id, raid, overwrite=0):
 
     # delta :: ruído adicionado aos intervalos de distâncias exatas, evitando problemas de DL.
     # distance_accept_control :: distância intermolecular limite (Ang) aceita;
-    delta = np.random.rand(1)[0] / 100
+    delta = np.random.rand(1)[0] / 10000
     distance_accept_control = 5.0
 
     print(":: Grau de aceitação da Distância intermolecular: {} Ang.".format(distance_accept_control))
