@@ -1,1 +1,1 @@
-# Gradiente Projetado espectral para estruturas proteicas.
+# Protein refinement method.
