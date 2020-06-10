@@ -130,7 +130,7 @@ def main():
         test_path = protein_tests[f'{node}']
         pdb = open_pdb_file(pdb_path)
         logging.debug(':: Environmental properties successful loaded.')
-        distancias, u, v, lb, ub, prop_dist = env_set(dist_path, node)
+        distancias, u, v, lb, ub, prop_dist = env_set(dist_path)
 
         # Now begins the refinement process of each protein
         # SPG launch and start phase

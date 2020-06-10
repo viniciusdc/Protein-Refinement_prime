@@ -1,8 +1,7 @@
-import logging
-import numpy as np
+import os
 from Methods.atoms_reordination import atoms_re_ordination
 from Methods.spectral_projected_gradient import protein_spg
-from Methods.pdf_file_gen import write_pdb_file
+from Methods.pdb_file_gen import write_pdb_file
 from Methods.utils import *
 from Methods.obj import *
 from LOG import os_display_call
@@ -20,10 +19,10 @@ def launch_spg(node, pdb, test_path, distancias, lb, ub, u, v, config_ops):
         logger.setLevel(10)
 
     # Adjust variables:
-    Noise, TOL, N, M, w = 1e-1, 1e-6, 2000, 15, np.ones(len(lb))
+    noise, tol, N, M, w = 1e-1, 1e-6, 2000, 15, np.ones(len(lb))
     num_atom_init = int(len(pdb[:, 1]))
-    # Noise :: Degree of disturbance of the expected solution;
-    # TOL :: tolerance for the SPG;
+    # noise :: Degree of disturbance of the expected solution;
+    # tol :: tolerance for the SPG;
     # N :: maximum accepted number of iterations;
     # M :: non monotone parameter of GLL line search;
     # w :: weight vector
@@ -64,7 +63,7 @@ def launch_spg(node, pdb, test_path, distancias, lb, ub, u, v, config_ops):
             fo_scaled, fo_non_scaled, xi = 0, 0, []
     else:
         logger.debug(":: Generating initial point file using a perturbed expected solution.")
-        xi = Noise * np.asarray([np.random.normal(0, 1, len(solution)) for i in range(3)]).T
+        xi = noise * np.asarray([np.random.normal(0, 1, len(solution)) for i in range(3)]).T
         xi = xi + solution
         xi = np.array(xi)
         xi = centralizar(xi)
@@ -75,7 +74,7 @@ def launch_spg(node, pdb, test_path, distancias, lb, ub, u, v, config_ops):
         data = {}
         try:
             logger.info(f":: Multi-start option --Enable {10}x times")
-            logger.info(f":: maximum iterations: {N}, tol: {TOL} and memory: {M}")
+            logger.info(f":: maximum iterations: {N}, tol: {tol} and memory: {M}")
             # multi start option enable, initial distance vector will be set as in multi-start definition
             yi = dist_matrix_projection(int(len(u)), u, v, lb, ub, xi)
             to = time()
@@ -84,7 +83,7 @@ def launch_spg(node, pdb, test_path, distancias, lb, ub, u, v, config_ops):
                 grad_stress,
                 xi,
                 yi,
-                [u, v, w, lb, ub, TOL, N, M],
+                [u, v, w, lb, ub, tol, N, M],
                 debug_mode=debug_mode,
             )
             elapsed_time = time() - to
@@ -104,7 +103,7 @@ def launch_spg(node, pdb, test_path, distancias, lb, ub, u, v, config_ops):
                     grad_stress,
                     xi,
                     yi,
-                    [u, v, w, lb, ub, TOL, N, M],
+                    [u, v, w, lb, ub, tol, N, M],
                     debug_mode=debug_mode,
                 )
                 elapsed_time = time() - to
@@ -126,7 +125,6 @@ def launch_spg(node, pdb, test_path, distancias, lb, ub, u, v, config_ops):
             )
             exit()
             out = []
-            fo, elapsed_time = 0.0, 0.0
 
         # parameter initialization for data output:
         ops = (xi, solution, u, v, lb, ub)
@@ -149,14 +147,14 @@ def launch_spg(node, pdb, test_path, distancias, lb, ub, u, v, config_ops):
         if debug_mode:
             logger.debug(":: --True")
         try:
-            logger.info(f":: maximum iterations: {N}, tol: {TOL} and memory: {M}")
+            logger.info(f":: maximum iterations: {N}, tol: {tol} and memory: {M}")
             to = time()
             out = protein_spg(
                 stress,
                 grad_stress,
                 xi,
                 yi,
-                [u, v, w, lb, ub, TOL, N, M],
+                [u, v, w, lb, ub, tol, N, M],
                 debug_mode=debug_mode,
             )
             elapsed_time = time() - to
@@ -208,12 +206,14 @@ def launch_spg(node, pdb, test_path, distancias, lb, ub, u, v, config_ops):
 
     # export original solution pdb file -- only if it dos not already exists
     try:
-        with open(raid_gen("Orig")) as f:
+        if os.path.isfile(raid_gen("Orig")):
             logger.info(f":: Origin already exists!")
-    except FileNotFoundError:
-        logger.info(f":: Creating a new Origin\n")
-        write_pdb_file(raid_gen("Orig"), solution, atoms[:, 1], atoms[:, 3], atoms[:, 2])
+        else:
+            logger.info(f":: Creating a new Origin\n")
+            write_pdb_file(raid_gen("Orig"), solution, atoms[:, 1], atoms[:, 3], atoms[:, 2])
 
+    except FileNotFoundError as e:
+        logger.error(f":: Some error occurred: {e}")
     # export initial point
     write_pdb_file(raid_gen("Ponto"), xi, atoms[:, 1], atoms[:, 3], atoms[:, 2])
     # ----------------------------------------------------------

@@ -177,7 +177,6 @@ def open_pdb_file(dir_pdb: str, debug_mode: bool = False):
     except FileNotFoundError as e:
         logger.warning(":: PDB file not found!")
         logger.error(f":: {e}")
-        pdb = []
         logger.warning(":: The process was interrupted!")
         # If no pdb file was found we can't proceed with this node.
         return exit()
@@ -185,7 +184,7 @@ def open_pdb_file(dir_pdb: str, debug_mode: bool = False):
     return pdb
 
 
-def env_set(raid: str, node: str, debug_mode: bool = False):
+def env_set(raid: str, debug_mode: bool = False):
     """"Prepares all the necessary variables for the SPG phase"""
     # get current logger
     logger = logging.getLogger()
