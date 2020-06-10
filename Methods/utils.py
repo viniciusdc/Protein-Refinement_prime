@@ -1,5 +1,7 @@
 import numpy as np
 import random
+import logging
+from subprocess import Popen, PIPE, STDOUT
 from scipy.linalg import svd
 
 
@@ -59,12 +61,14 @@ def centralizar(x):
 
 # rmsd :: calcula a raiz quadrada da média dos desvios entre duas estruturas A e B (centralizadas);
 def rmsd(matrix_a, matrix_b):
+    # Get logger
+    logger = logging.getLogger('root.utils.rmsd')
     # n :: número de pontos;
     n, k = matrix_a.shape
     if matrix_a.shape != matrix_b.shape:
-        print('Dimensões incompativeis entre as matrizes')
-        print('Dimensões da matriz A : {}'.format(matrix_a.shape))
-        print('Dimensões da matriz B : {}'.format(matrix_b.shape))
+        logger.warning('Dimensões incompativeis entre as matrizes')
+        logger.warning('Dimensões da matriz A : {}'.format(matrix_a.shape))
+        logger.warning('Dimensões da matriz B : {}'.format(matrix_b.shape))
         return 'NaN'
     # Procrustes:
     # Given two matrices A and B it is asked to find an orthogonal matrix Q which most closely maps A to B.
@@ -127,3 +131,94 @@ def dist_matrix_projection(dim, vec_u, vec_v, lower_bound, upper_bound, point_se
             elif d > upper_bound[s]:
                 y[s] = upper_bound[s]
     return y
+
+
+def launch_sdp(path):
+    """ This code creates de run bash line, to start the matlab functions for the SDP program"""
+    # Get Logger
+    logger = logging.getLogger('matlab.sdp')
+
+    # Look for the Matlab current working directory, and set the environment code for SDP;
+    # Get Matlab run bash line:
+    matlab_scripts = path + '\\Matlab\\PDB_aux.m'
+
+    # TODO: This code works for matlab R2019b and later. For earlier versions we should add an equivalent command.
+    run_command = 'matlab -batch "addpath(' + f"'{matlab_scripts}'); try sdpaux; catch ME; end" + '"'
+
+    # Run and wait for process finishes
+    try:
+        process = Popen(run_command, stdout=PIPE, stderr=STDOUT)
+        while True:
+            try:
+                line = process.stdout.readline()
+            except StopIteration:
+                break
+            if line != b'':
+                if isinstance(line, bytes):
+                    line = line.decode('utf-8')
+                logger.info(line.rstrip())
+            else:
+                break
+
+    except Exception as e:
+        print(f":: Attempt to run Matlab script failed with error: \n {e}.")
+
+
+def open_pdb_file(dir_pdb: str, debug_mode: bool = False):
+    """"This function aims to open the correspondent pdf file for a given node."""
+    # Get the current logger
+    logger = logging.getLogger('root.utils.open_pdb')
+    if debug_mode:
+        logger.setLevel(10)
+    try:
+        # open PDB file (as an np-array):
+        pdb = np.genfromtxt(dir_pdb, dtype="str")
+
+    except FileNotFoundError as e:
+        logger.warning(":: PDB file not found!")
+        logger.error(f":: {e}")
+        pdb = []
+        logger.warning(":: The process was interrupted!")
+        # If no pdb file was found we can't proceed with this node.
+        return exit()
+    logger.debug(":: PDB file read complete!")
+    return pdb
+
+
+def env_set(raid: str, node: str, debug_mode: bool = False):
+    """"Prepares all the necessary variables for the SPG phase"""
+    # get current logger
+    logger = logging.getLogger()
+    if debug_mode:
+        logger.setLevel(10)
+
+    # open distance file (as an np-array):
+    distancias = np.genfromtxt(raid, dtype="str")
+    logger.debug(f":: distance file read complete!")
+
+    # index vectors (for atom pairs [u, v]):
+    u, v = (
+        np.array(distancias[:, 0], dtype="int"),
+        np.array(distancias[:, 1], dtype="int"),
+    )
+    # it starts from zero on python
+    u = u - np.ones(len(u), dtype="int")
+    v = v - np.ones(len(v), dtype="int")
+
+    # lower and upper bounds vectors:
+    lb, ub = (
+        np.array(distancias[:, 8], dtype="float"),
+        np.array(distancias[:, 9], dtype="float"),
+    )
+
+    prop_dist = 0
+    for k in range(len(u)):
+        if int(distancias[k][-1]) != 0:
+            prop_dist += 1
+    prop_dist = int(prop_dist)
+
+    # Log archive
+    logger.debug(":: Process completed successfully, waiting for data to be read...")
+    logger.debug(f":: distance file dist.txt read complete!")
+
+    return distancias, u, v, lb, ub, prop_dist
