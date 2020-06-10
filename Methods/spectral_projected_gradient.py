@@ -1,11 +1,18 @@
 from Methods.utils import prod_interno, dist_matrix_projection, centralizar
 from Methods.obj import *
+import logging
 
 
 def protein_spg(
         obj_fun, grad_fun, initial_point, initial_dist_vector, ops, debug_mode=False
 ):
     """ spectral projected gradient method for protein like conformations using stress as objective function"""
+    # Get Logger
+    logger = logging.getLogger('root.load_spg.spg')
+    if debug_mode:
+        # Enable debug level messages
+        logger.setLevel(10)
+
     u, v, w, lb, ub, tol, max_iter, num_memory = ops
 
     # initial point and distance vector setup
@@ -14,8 +21,6 @@ def protein_spg(
 
     # initial stress evaluation:
     fo = obj_fun(xo, yo, u, v, w)
-    # log list
-    log_spg = []
 
     # memory vector for non monotone line search:
     f_memory = np.zeros(num_memory)
@@ -34,12 +39,15 @@ def protein_spg(
     pb = 1.0
     # iterator:
     k = 0
+    # debug mode --true
+    logger.debug(
+        f">> Iter - Obj ------ GtD ------ |d| ------ pB ------ alpha ----"
+    )
     while k < max_iter:
         # first stop criteria;
         if fo < tol:
-            print(">> objective function value less than tolerance !")
-            log_spg.append(">> objective function value less tha tolerance !")
-            return xo, backtracking, k, fo, gtd, norm_d, log_spg
+            logger.debug(">> objective function value less than tolerance !")
+            return xo, backtracking, k, fo, gtd, norm_d
 
         # first update (using the spectral gradient), when k == 1 it's a gradient like step:
         sx = xo - (gx / pb)
@@ -60,9 +68,8 @@ def protein_spg(
 
         # second stop criteria;
         if abs(gtd) < 1e-6:
-            print(f">> Product --Gradient x direction-- less than tolerance {1e-6}!")
-            log_spg.append(f">> Product --Gradient x direction-- less than tolerance {1e-6}!")
-            return xo, backtracking, k, fo, gtd, norm_d, log_spg
+            logger.debug(f">> Product --Gradient x direction-- less than tolerance {1e-6}!")
+            return xo, backtracking, k, fo, gtd, norm_d
 
         # non-monotone line search with backtracking
         alpha = 1.0
@@ -81,12 +88,9 @@ def protein_spg(
             yn = yp + alpha * dy
             fn = obj_fun(xn, yn, u, v, w)
 
-        if debug_mode:
-            print(
-                f">> Iteration: {k:<3} Obj: {fn:<26} GtD: {gtd:<26} |d|: {norm_d:<26} pB: {pb:<26} alpha: {alpha:<10}"
-            )
-            log_spg.append(f">> Iteration: {k:<3} Obj: {fn:<26} GtD: {gtd:<26} "
-                           f"|d|: {norm_d:<26} pB: {pb:<26} alpha: {alpha:<10}")
+        logger.debug(
+            f">> {k:<5}: {fn:<10.3e} {gtd:<10.3e} {norm_d:<10.3e} {pb:<10.3e} {alpha:<10}"
+        )
 
         # variables update:
         f_memory[k % num_memory] = fn
@@ -109,9 +113,8 @@ def protein_spg(
 
         k = k + 1
 
-    print(f">> Fail, Maximum iterations reached!")
-    log_spg.append(f">> Fail, Maximum iterations reached!")
-    return xo, backtracking, k, fo, gtd, norm_d, log_spg
+    logger.debug(f">> Fail, Maximum iterations reached!")
+    return xo, backtracking, k, fo, gtd, norm_d
 
 
 # simple test for protein_spg using stress function
