@@ -6,7 +6,8 @@ parser.add_argument('protein_name', type=str, help="input the Mdjeep protein nam
 
 args = parser.parse_args()
 
-direct = f'C:\\Users\\viniv\\Documents\\protein_tests\\Mdjeep\\{args.protein_name}.txt'
+main_dir = f'C:\\Users\\viniv\\Documents\\protein_tests\\Mdjeep'
+direct = main_dir + f'\\{args.protein_name}.txt'
 distancias = np.genfromtxt(direct, dtype='str')
 distancias[:, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]] = distancias[:, [1, 0, 7, 9, 3, 6, 8, 2, 4, 5]]
 
@@ -38,7 +39,8 @@ for item in distancias:
     k += 1
 
     # Escrita em arquivo:
-output_d = f'C:\\Users\\viniv\\Documents\\protein_tests\\Nodes\\Teste {args.protein_name}\\dist_{args.protein_name}.txt'
+output_d = main_dir + f'\\Teste {args.protein_name}\\dist_{args.protein_name}.txt'
 with open(output_d, 'w') as f:
     for item in dist_data:
         f.write("%s\n" % item)
+

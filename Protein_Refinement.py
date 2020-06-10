@@ -113,7 +113,7 @@ except OSError as err:
     exit()
 
 # Adjust variables:
-Noise, TOL, N, M, w = 0, 1e-6, 2000, 15, np.ones(len(lb))
+Noise, TOL, N, M, w = 1e-1, 1e-6, 2000, 15, np.ones(len(lb))
 # Noise :: Degree of disturbance of the expected solution;
 # TOL :: tolerance for the SPG;
 # N :: maximum accepted number of iterations;
@@ -178,7 +178,8 @@ if args.multi_start:
     try:
         print(f":: Multi-start option --Enable {10}x times")
         log.append(f":: Multi-start option --Enable {10}x times")
-
+        print(f":: maximum iterations: {N}, tol: {TOL} and memory: {M}")
+        log.append(f":: maximum iterations: {N}, tol: {TOL} and memory: {M}")
         # multi start option enable, initial distance vector will be set as in multi-start definition
         yi = dist_matrix_projection(int(len(u)), u, v, lb, ub, xi)
         to = time()
@@ -256,7 +257,7 @@ if args.multi_start:
         args.convex_relax,
         fo_non_scaled,
         fo_scaled,
-        ops
+        ops,
     )
     os_display_call(log, local_dir, main, data, multistart=True)
 
@@ -267,6 +268,8 @@ else:
         print(":: Debug mode --True")
         log.append(":: Debug mode --True")
     try:
+        print(f":: maximum iterations: {N}, tol: {TOL} and memory: {M}")
+        log.append(f":: maximum iterations: {N}, tol: {TOL} and memory: {M}")
         to = time()
         out = protein_spg(
             stress,

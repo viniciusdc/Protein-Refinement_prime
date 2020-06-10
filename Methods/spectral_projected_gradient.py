@@ -17,9 +17,6 @@ def protein_spg(
     # log list
     log_spg = []
 
-    print(f">> maximum iterations: {max_iter}, tol: {tol} and memory: {num_memory}")
-    log_spg.append(f">> maximum iterations: {max_iter}, tol: {tol} and memory: {num_memory}")
-
     # memory vector for non monotone line search:
     f_memory = np.zeros(num_memory)
     f_memory[0] = fo

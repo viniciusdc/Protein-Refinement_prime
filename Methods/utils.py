@@ -66,11 +66,12 @@ def rmsd(matrix_a, matrix_b):
         print('Dimensões da matriz A : {}'.format(matrix_a.shape))
         print('Dimensões da matriz B : {}'.format(matrix_b.shape))
         return 'NaN'
-
+    # Procrustes:
+    # Given two matrices A and B it is asked to find an orthogonal matrix Q which most closely maps A to B.
     matrix_a = centralizar(matrix_a)
     matrix_b = centralizar(matrix_b)
     singular_value_dec = svd(np.dot(matrix_b, matrix_a.T))
-    matri_q = np.dot(singular_value_dec[0], singular_value_dec[2].T)
+    matri_q = np.dot(singular_value_dec[0], singular_value_dec[2])
 
     correlation = np.linalg.norm(np.dot(matri_q, matrix_a) - matrix_b, ord='fro')
 

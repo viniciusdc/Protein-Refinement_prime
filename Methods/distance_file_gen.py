@@ -8,7 +8,7 @@ import numpy as np
 # protein_id :: nome da proteina;
 # raid :: diretório local onde o arquivo de saída será hospedado (str).
 # exemplo :: 'C:\\Users\\**\\Desktop\\Testes'
-def gen_distance_file(pdb, protein_id, raid, overwrite=0):
+def gen_distance_file(pdb, protein_id, raid, overwrite=False):
     # Informações de controle iniciais ---------------------------
 
     # raid_d :: diretório de saída do arquivo de distâncias gerado
@@ -17,11 +17,12 @@ def gen_distance_file(pdb, protein_id, raid, overwrite=0):
     try:
         with open(raid_d) as f:
             # Se o arquivo de distâncias já existe não há necessidade em criar um novo;
-            if overwrite == 0:
-                return str(raid_d)
-            elif overwrite == 1:
+            if overwrite:
                 # Usuario requisitou a geração de um novo arquivo de distâncias;
                 pass
+            else:
+                return str(raid_d)
+
     # caso o arquivo não seja encontrado e/ou não exista no diretório especificado, prosseguimos criando um novo;
     except FileNotFoundError:
         print("Arquivo não encontrado. Gerando novo arquivo !")
@@ -72,7 +73,7 @@ def gen_distance_file(pdb, protein_id, raid, overwrite=0):
                             data_file.append([atom2[1], atom1[1], atom2[2], atom2[3],
                                               atom2[5], atom1[2], atom1[3], atom1[5],
                                               dist_lb, dist_ub, '1'])
-                        # Caso contrário, adicionaremos esse par se "dist" entre eles for menor que 5 Ang -- [0]:
+                        # Caso contrário, adicionaremos esse par se "dist" entre eles for menor que o aceitável -- [0]:
                         elif dist <= distance_accept_control:
                             # Adicionando 'ruído' as limitações inferiores e superiores:
                             dist_lb = dist - 1 / 3
@@ -100,7 +101,7 @@ def gen_distance_file(pdb, protein_id, raid, overwrite=0):
     # nos indices listados, portanto é necessária a reordenação desses, de modo a resolver esse problema.
 
     # O que faremos a seguir é literalmente criar uma nova sequência de indices em data_file, totalmente ordenados;
-    # usaremos um dicionario para mapear a nova ordenação, exemplo : {(novo_seq, atom_index)}
+    # usaremos um dicionário para mapear a nova ordenação, exemplo : {(new_index, atom_index)}
     dict_index_order = enumerate(index_set)
 
     print(">> Preparação para escrita em arquivo;")
@@ -116,7 +117,6 @@ def gen_distance_file(pdb, protein_id, raid, overwrite=0):
         dist_data.append(linha)
 
     # Escrita em arquivo:
-
     with open(raid_d, 'w') as distancias:
         for item in dist_data:
             distancias.write("%s\n" % item)
