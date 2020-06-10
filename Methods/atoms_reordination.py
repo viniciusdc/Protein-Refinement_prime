@@ -1,9 +1,13 @@
 import numpy as np
 from time import time
+import logging
 
 
 def atoms_re_ordination(pdb_file, dist_file):
-    """sorting atoms according to its distance file, to create the expected/correct solution"""
+    """sorting atoms according to its distance file. To create the expected/correct solution"""
+    # Get current logger
+    logger = logging.getLogger()
+
     # total number of atoms (in accordance with the distance data file)
     total_atoms_ord = max(
         max(np.array(dist_file[:, 0], dtype="int")),
@@ -35,7 +39,6 @@ def atoms_re_ordination(pdb_file, dist_file):
 
     solution = np.array(atoms_solve)
     elapsed_time = time() - to
-    string = f":: The process of reformatting/re-ordination was successfully completed in {elapsed_time:.4f} s"
-    print(string)
+    logger.debug(f":: The process of reformatting/re-ordination was successfully completed in {elapsed_time:.4f}s")
 
-    return solution, total_atoms_ord, string, atoms
+    return solution, total_atoms_ord, atoms
